@@ -86,7 +86,13 @@ namespace WorkflowCore.Services
                         WorkflowId = workflow.Id,
                         ExecutionPointerId = pointer.Id,
                         ErrorTime = _datetimeProvider.Now.ToUniversalTime(),
-                        Message = ex.Message
+                        Message = ex.Message,
+                        Type = ex.GetType().ToString(),
+                        Source = ex.Source,
+                        StackTrace = ex.StackTrace.Trim(),
+                        TargetSiteName = ex.TargetSite.Name,
+                        TargetSiteModule = ex.TargetSite.Module.Name,
+                        HelpLink = ex.HelpLink
                     });
                         
                     _executionResultProcessor.HandleStepException(workflow, def, pointer, step, ex);
