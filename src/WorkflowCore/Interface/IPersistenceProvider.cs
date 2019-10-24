@@ -42,6 +42,13 @@ namespace WorkflowCore.Interface
 
         Task MarkEventUnprocessed(string id);
 
+        /// <summary>
+        /// Feature detection.
+        /// Determines if the Persistence Provider supports Persisting Errors.
+        /// </summary>
+        /// <returns></returns>
+        bool SupportsPersistingErrors { get; }
+
         Task PersistErrors(IEnumerable<ExecutionError> errors);
 
         void EnsureStoreExists();
