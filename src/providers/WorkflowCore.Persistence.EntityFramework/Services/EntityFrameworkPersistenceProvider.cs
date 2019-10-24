@@ -287,6 +287,9 @@ namespace WorkflowCore.Persistence.EntityFramework.Services
             }
         }
 
+        /// <inheritdoc/>
+        public bool SupportsPersistingErrors => true;
+
         public async Task PersistErrors(IEnumerable<ExecutionError> errors)
         {
             using (var db = ConstructDbContext())
@@ -299,7 +302,6 @@ namespace WorkflowCore.Persistence.EntityFramework.Services
                         db.Set<PersistedExecutionError>().Add(error.ToPersistable());
                     }
                     await db.SaveChangesAsync();
-
                 }
             }
         }
@@ -308,6 +310,5 @@ namespace WorkflowCore.Persistence.EntityFramework.Services
         {
             return _contextFactory.Build();
         }
-
     }
 }

@@ -43,6 +43,9 @@ namespace WorkflowCore.Services
         public Task MarkEventProcessed(string id) => _innerService.MarkEventProcessed(id);
 
         public Task MarkEventUnprocessed(string id) => _innerService.MarkEventUnprocessed(id);
+        
+        /// <inheritdoc/>
+        public bool SupportsPersistingErrors => _innerService.SupportsPersistingErrors;
 
         public Task PersistErrors(IEnumerable<ExecutionError> errors) => _innerService.PersistErrors(errors);
 
