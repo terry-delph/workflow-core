@@ -15,7 +15,8 @@ namespace WorkflowCore.Services
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
     /// <summary>
-    /// In-memory implementation of IPersistenceProvider for demo and testing purposes
+    /// In-memory implementation of IPersistenceProvider for demo and testing purposes.
+    /// Supports Error Persistence.
     /// </summary>
     public class MemoryPersistenceProvider : ISingletonMemoryProvider
     {
@@ -200,6 +201,9 @@ namespace WorkflowCore.Services
                 }
             }
         }
+
+        /// <inheritdoc/>
+        public bool SupportsPersistingErrors => true;
 
         public async Task PersistErrors(IEnumerable<ExecutionError> errors)
         {
