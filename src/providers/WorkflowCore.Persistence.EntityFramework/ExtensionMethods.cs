@@ -84,11 +84,19 @@ namespace WorkflowCore.Persistence.EntityFramework
 
         internal static PersistedExecutionError ToPersistable(this ExecutionError instance)
         {
-            var result = new PersistedExecutionError();            
-            result.ErrorTime = instance.ErrorTime;
-            result.Message = instance.Message;
-            result.ExecutionPointerId = instance.ExecutionPointerId;
-            result.WorkflowId = instance.WorkflowId;
+            var result = new PersistedExecutionError
+            {
+                ErrorTime = instance.ErrorTime,
+                Message = instance.Message,
+                ExecutionPointerId = instance.ExecutionPointerId,
+                WorkflowId = instance.WorkflowId,
+                Type = instance.Type,
+                Source = instance.Source,
+                StackTrace = instance.StackTrace,
+                TargetSiteName = instance.TargetSiteName,
+                TargetSiteModule = instance.TargetSiteModule,
+                HelpLink = instance.HelpLink
+            };
 
             return result;
         }
