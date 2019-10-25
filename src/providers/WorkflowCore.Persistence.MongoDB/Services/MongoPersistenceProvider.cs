@@ -214,6 +214,9 @@ namespace WorkflowCore.Persistence.MongoDB.Services
             await Events.UpdateOneAsync(x => x.Id == id, update);
         }
 
+        /// <inheritdoc/>
+        public bool SupportsPersistingErrors => true;
+
         public async Task PersistErrors(IEnumerable<ExecutionError> errors)
         {
             if (errors.Any())
