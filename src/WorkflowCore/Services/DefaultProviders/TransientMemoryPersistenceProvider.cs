@@ -21,7 +21,7 @@ namespace WorkflowCore.Services
         public Task<string> CreateEventSubscription(EventSubscription subscription) => _innerService.CreateEventSubscription(subscription);
 
         public Task<string> CreateNewWorkflow(WorkflowInstance workflow) => _innerService.CreateNewWorkflow(workflow);
-
+        
         public void EnsureStoreExists() => _innerService.EnsureStoreExists();
 
         public Task<Event> GetEvent(string id) => _innerService.GetEvent(id);
@@ -48,6 +48,8 @@ namespace WorkflowCore.Services
         public bool SupportsPersistingErrors => _innerService.SupportsPersistingErrors;
 
         public Task PersistErrors(IEnumerable<ExecutionError> errors) => _innerService.PersistErrors(errors);
+
+        public Task<IEnumerable<ExecutionError>> GetExecutionErrors(string workflowId) => _innerService.GetExecutionErrors(workflowId);
 
         public Task PersistWorkflow(WorkflowInstance workflow) => _innerService.PersistWorkflow(workflow);
 
