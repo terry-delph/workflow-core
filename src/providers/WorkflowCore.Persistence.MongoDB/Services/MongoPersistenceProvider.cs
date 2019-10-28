@@ -126,21 +126,33 @@ namespace WorkflowCore.Persistence.MongoDB.Services
 
         public async Task<IEnumerable<WorkflowInstance>> GetWorkflowInstances(WorkflowStatus? status, string type, DateTime? createdFrom, DateTime? createdTo, int skip, int take)
         {
-            IMongoQueryable<WorkflowInstance> result = WorkflowInstances.AsQueryable();
+            IMongoQueryable<WorkflowInstance> query = WorkflowInstances.AsQueryable();
 
             if (status.HasValue)
-                result = result.Where(x => x.Status == status.Value);
+                query = query.Where(x => x.Status == status.Value);
 
             if (!String.IsNullOrEmpty(type))
-                result = result.Where(x => x.WorkflowDefinitionId == type);
+                query = query.Where(x => x.WorkflowDefinitionId == type);
 
             if (createdFrom.HasValue)
-                result = result.Where(x => x.CreateTime >= createdFrom.Value);
+                query = query.Where(x => x.CreateTime >= createdFrom.Value);
 
             if (createdTo.HasValue)
-                result = result.Where(x => x.CreateTime <= createdTo.Value);
+                query = query.Where(x => x.CreateTime <= createdTo.Value);
 
-            return await result.Skip(skip).Take(take).ToListAsync();
+            query = query.Skip(skip).Take(take);
+
+            var rawResult = await query.Join(ExecutionErrors.AsQueryable(),
+                    workflow => workflow.Id,
+                    error => error.WorkflowId,
+                    (workflow, error) => new { Workflow = workflow, Error = error })
+                //.a
+                .GroupBy(x => x.Workflow,
+                    selector => new { selector.Workflow, ErrorCount = selector.Error })
+                .Select(grouping => new { WorkFlow = grouping.Key, ExecutionErrorCount = grouping.Count() })
+                .ToListAsync();
+
+            return await query.ToListAsync();
         }
 
         public async Task<string> CreateEventSubscription(EventSubscription subscription)
@@ -221,6 +233,18 @@ namespace WorkflowCore.Persistence.MongoDB.Services
         {
             if (errors.Any())
                 await ExecutionErrors.InsertManyAsync(errors);
+        }
+
+        public async Task<IEnumerable<ExecutionError>> GetExecutionErrors(string workflowId)
+        {
+            IMongoQueryable<ExecutionError> result = ExecutionErrors.AsQueryable();
+            {
+                var raw = await result
+                    .Where(x => x.WorkflowId == workflowId)
+                    .ToListAsync();
+
+                return raw.Any() ? raw : new List<ExecutionError>();
+            }
         }
     }
 }

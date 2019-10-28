@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using WorkflowCore.Interface;
 using WorkflowCore.Persistence.EntityFramework.Models;
@@ -71,9 +72,7 @@ namespace WorkflowCore.Persistence.EntityFramework.Services
             {
                 IQueryable<PersistedWorkflow> query = db.Set<PersistedWorkflow>()
                     .Include(wf => wf.ExecutionPointers)
-                    .ThenInclude(ep => ep.ExtensionAttributes)
-                    .Include(wf => wf.ExecutionPointers)
-                    .AsQueryable();
+                    .ThenInclude(ep => ep.ExtensionAttributes);
 
                 if (status.HasValue)
                     query = query.Where(x => x.Status == status.Value);
@@ -87,11 +86,26 @@ namespace WorkflowCore.Persistence.EntityFramework.Services
                 if (createdTo.HasValue)
                     query = query.Where(x => x.CreateTime <= createdTo.Value);
 
-                var rawResult = await query.Skip(skip).Take(take).ToListAsync();
+                query = query.Skip(skip).Take(take);
+
+                var rawResult = await query.Join(db.Set<PersistedExecutionError>(),
+                        workflow => workflow.InstanceId.ToString(),
+                        error => error.WorkflowId,
+                        (workflow, error) => new {Workflow = workflow, Error = error})
+                    .GroupBy(x => x.Workflow,
+                        selector => new {selector.Workflow, ErrorCount = selector.Error})
+                    .Select(grouping => new {WorkFlow = grouping.Key, ExecutionErrorCount = grouping.Count()})
+                    .ToListAsync();
+
                 List<WorkflowInstance> result = new List<WorkflowInstance>();
 
                 foreach (var item in rawResult)
-                    result.Add(item.ToWorkflowInstance());
+                {
+                    var workflowInstance = item.WorkFlow.ToWorkflowInstance();
+                    //Set the Execution Error Count
+                    workflowInstance.ExecutionErrorCount = item.ExecutionErrorCount;
+                    result.Add(workflowInstance);
+                }
 
                 return result;
             }
@@ -102,16 +116,26 @@ namespace WorkflowCore.Persistence.EntityFramework.Services
             using (var db = ConstructDbContext())
             {
                 var uid = new Guid(Id);
-                var raw = await db.Set<PersistedWorkflow>()
+                var rawResult = await db.Set<PersistedWorkflow>()
                     .Include(wf => wf.ExecutionPointers)
                     .ThenInclude(ep => ep.ExtensionAttributes)
-                    .Include(wf => wf.ExecutionPointers)
-                    .FirstAsync(x => x.InstanceId == uid);
+                    .Join(db.Set<PersistedExecutionError>(),
+                        workflow => workflow.InstanceId.ToString(),
+                        error => error.WorkflowId,
+                        (workflow, error) => new { Workflow = workflow, Error = error })
+                    .GroupBy(x => x.Workflow,
+                        selector => new { selector.Workflow, ErrorCount = selector.Error })
+                    .Select(grouping => new { WorkFlow = grouping.Key, ExecutionErrorCount = grouping.Count() })
+                    .FirstAsync(x => x.WorkFlow.InstanceId == uid);
 
-                if (raw == null)
+                if (rawResult == null)
                     return null;
+                
+                var workflowInstance = rawResult.WorkFlow.ToWorkflowInstance();
 
-                return raw.ToWorkflowInstance();
+                //Set the Execution Error Count
+                workflowInstance.ExecutionErrorCount = rawResult.ExecutionErrorCount;
+                return workflowInstance;
             }
         }
 
@@ -125,13 +149,30 @@ namespace WorkflowCore.Persistence.EntityFramework.Services
             using (var db = ConstructDbContext())
             {
                 var uids = ids.Select(i => new Guid(i));
-                var raw = db.Set<PersistedWorkflow>()
+                var rawResult = await db.Set<PersistedWorkflow>()
                     .Include(wf => wf.ExecutionPointers)
                     .ThenInclude(ep => ep.ExtensionAttributes)
-                    .Include(wf => wf.ExecutionPointers)
-                    .Where(x => uids.Contains(x.InstanceId));
+                    .Where(x => uids.Contains(x.InstanceId))
+                    .Join(db.Set<PersistedExecutionError>(),
+                        workflow => workflow.InstanceId.ToString(),
+                        error => error.WorkflowId,
+                        (workflow, error) => new { Workflow = workflow, Error = error })
+                    .GroupBy(x => x.Workflow,
+                        selector => new { selector.Workflow, ErrorCount = selector.Error })
+                    .Select(grouping => new { WorkFlow = grouping.Key, ExecutionErrorCount = grouping.Count() })
+                    .ToListAsync();
 
-                return (await raw.ToListAsync()).Select(i => i.ToWorkflowInstance());
+                List<WorkflowInstance> result = new List<WorkflowInstance>();
+
+                foreach (var item in rawResult)
+                {
+                    var workflowInstance = item.WorkFlow.ToWorkflowInstance();
+                    //Set the Execution Error Count
+                    workflowInstance.ExecutionErrorCount = item.ExecutionErrorCount;
+                    result.Add(workflowInstance);
+                }
+
+                return result;
             }
         }
 
@@ -303,6 +344,21 @@ namespace WorkflowCore.Persistence.EntityFramework.Services
                     }
                     await db.SaveChangesAsync();
                 }
+            }
+        }
+        
+        public async Task<IEnumerable<ExecutionError>> GetExecutionErrors(string workflowId)
+        {
+            using (var db = ConstructDbContext())
+            {
+                var raw = await db.Set<PersistedExecutionError>()
+                    .Where(x => x.WorkflowId == workflowId)
+                    .ToListAsync();
+
+                if (!raw.Any())
+                    return new List<ExecutionError>();
+
+                return raw.Select(ee => ee.ToExecutionError()).ToList();
             }
         }
 

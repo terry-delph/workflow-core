@@ -17,10 +17,11 @@ namespace WorkflowCore.IntegrationTests.Scenarios
         {
             builder
                 .StartWith<ExceptionThrownStep>()
-                    .OnError(WorkflowErrorHandling.Terminate)
+                    //.OnError(WorkflowErrorHandling.Terminate)
+                    .CancelCondition(o => ExceptionThrownStep == 3)
+                    .OnError(WorkflowErrorHandling.Retry, TimeSpan.FromSeconds(5))
                 .Then(context =>
                 {
-                    ExceptionThrownStep++;
                     return ExecutionResult.Next();
                 });
         }
@@ -59,9 +60,9 @@ namespace WorkflowCore.IntegrationTests.Scenarios
             var workflowId = StartWorkflow(null);
             WaitForWorkflowToComplete(workflowId, TimeSpan.FromSeconds(30));
 
-            GetStatus(workflowId).Should().Be(WorkflowStatus.Terminated);
-            UnhandledStepErrors.Count.Should().Be(1);
-            ExceptionPersistenceWorkflow.ExceptionThrownStep.Should().Be(1);
+            GetStatus(workflowId).Should().Be(WorkflowStatus.Complete);
+            UnhandledStepErrors.Count.Should().Be(3);
+            ExceptionPersistenceWorkflow.ExceptionThrownStep.Should().Be(3);
 
             //Get Persisted Errors
             //PersistenceProvider.
@@ -71,6 +72,9 @@ namespace WorkflowCore.IntegrationTests.Scenarios
             firstException.HelpLink.Should().Be(ExceptionThrownStep.HelpLink);
             firstException.TargetSite.Name.Should().NotBeEmpty();
             firstException.TargetSite.Module.Name.Should().NotBeEmpty();
+
+            var instances2 = PersistenceProvider.GetWorkflowInstances(null, string.Empty, null, null, 0, 100).Result;
+
         }
     }
 }
