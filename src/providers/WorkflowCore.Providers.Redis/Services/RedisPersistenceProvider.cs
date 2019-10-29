@@ -182,12 +182,19 @@ namespace WorkflowCore.Providers.Redis.Services
         }
 
         /// <inheritdoc/>
-        public bool SupportsPersistingErrors => true;
+        public bool SupportsPersistingErrors => false;
 
         public Task PersistErrors(IEnumerable<ExecutionError> errors)
         {
-            //TODO: Implement persistence and update "SupportsPersistingErrors" field to 'true'
+            //ToDo: Implement persistence and update "SupportsPersistingErrors" field to 'true'
             return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<ExecutionError>> GetExecutionErrors(string workflowId)
+        {
+            //ToDo: Implement retrieval of ExecutionErrors
+            return new List<ExecutionError>();
         }
 
         public void EnsureStoreExists()

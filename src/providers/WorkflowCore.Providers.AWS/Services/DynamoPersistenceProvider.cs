@@ -364,8 +364,15 @@ namespace WorkflowCore.Providers.AWS.Services
 
         public Task PersistErrors(IEnumerable<ExecutionError> errors)
         {
-            //TODO: Implement persistence and update "SupportsPersistingErrors" field to 'true'
+            //ToDo: Implement persistence and update "SupportsPersistingErrors" field to 'true'
             return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<ExecutionError>> GetExecutionErrors(string workflowId)
+        {
+            //ToDo: Implement retrieval of ExecutionErrors
+            return new List<ExecutionError>();
         }
 
         public void EnsureStoreExists()
