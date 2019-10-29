@@ -39,6 +39,7 @@ namespace WorkflowCore.Persistence.MongoDB.Services
                 x.MapProperty(y => y.Status);
                 x.MapProperty(y => y.CreateTime);
                 x.MapProperty(y => y.CompleteTime);
+                x.MapProperty(y => y.ExecutionErrorCount);
                 x.MapProperty(y => y.ExecutionPointers);
             });
 
@@ -113,29 +114,30 @@ namespace WorkflowCore.Persistence.MongoDB.Services
             var result = await WorkflowInstances
                 .AsQueryable()
                 .Where(x => x.Id == Id)
-                .GroupJoin(ExecutionErrors,
-                    workflow => workflow.Id,
-                    error => error.WorkflowId,
-                    (workflow, errors) => new
-                    {
-                        Workflow = new WorkflowInstance()
-                        {
-                            Id = workflow.Id,
-                            CompleteTime = workflow.CompleteTime,
-                            CreateTime = workflow.CreateTime,
-                            Data = workflow.Data,
-                            Description = workflow.Description,
-                            ExecutionPointers = workflow.ExecutionPointers,
-                            NextExecution = workflow.NextExecution,
-                            Reference = workflow.Reference,
-                            Status = workflow.Status,
-                            Version = workflow.Version,
-                            WorkflowDefinitionId = workflow.WorkflowDefinitionId,
-                            ExecutionErrorCount = errors.Count()
-                        }
-                    })
+                //.GroupJoin(ExecutionErrors,
+                //    workflow => workflow.Id,
+                //    error => error.WorkflowId,
+                //    (workflow, errors) => new
+                //    {
+                //        Workflow = new WorkflowInstance()
+                //        {
+                //            Id = workflow.Id,
+                //            CompleteTime = workflow.CompleteTime,
+                //            CreateTime = workflow.CreateTime,
+                //            Data = workflow.Data,
+                //            Description = workflow.Description,
+                //            ExecutionPointers = workflow.ExecutionPointers,
+                //            NextExecution = workflow.NextExecution,
+                //            Reference = workflow.Reference,
+                //            Status = workflow.Status,
+                //            Version = workflow.Version,
+                //            WorkflowDefinitionId = workflow.WorkflowDefinitionId,
+                //            ExecutionErrorCount = errors.Count()
+                //        }
+                //    })
                 .FirstAsync();
-            return result.Workflow;
+            //return result.Workflow;
+            return result;
         }
 
         public async Task<IEnumerable<WorkflowInstance>> GetWorkflowInstances(IEnumerable<string> ids)
@@ -147,28 +149,28 @@ namespace WorkflowCore.Persistence.MongoDB.Services
 
             var result = await WorkflowInstances.AsQueryable()
                 .Where(x => ids.Contains(x.Id))
-                .GroupJoin(ExecutionErrors,
-                    workflow => workflow.Id,
-                    error => error.WorkflowId,
-                    (workflow, errors) => new
-                    {
-                        Workflow = new WorkflowInstance()
-                        {
-                            Id = workflow.Id,
-                            CompleteTime = workflow.CompleteTime,
-                            CreateTime = workflow.CreateTime,
-                            Data = workflow.Data,
-                            Description = workflow.Description,
-                            ExecutionPointers = workflow.ExecutionPointers,
-                            NextExecution = workflow.NextExecution,
-                            Reference = workflow.Reference,
-                            Status = workflow.Status,
-                            Version = workflow.Version,
-                            WorkflowDefinitionId = workflow.WorkflowDefinitionId,
-                            ExecutionErrorCount = errors.Count()
-                        }
-                    })
-                .Select(x => x.Workflow)
+                //.GroupJoin(ExecutionErrors,
+                //    workflow => workflow.Id,
+                //    error => error.WorkflowId,
+                //    (workflow, errors) => new
+                //    {
+                //        Workflow = new WorkflowInstance()
+                //        {
+                //            Id = workflow.Id,
+                //            CompleteTime = workflow.CompleteTime,
+                //            CreateTime = workflow.CreateTime,
+                //            Data = workflow.Data,
+                //            Description = workflow.Description,
+                //            ExecutionPointers = workflow.ExecutionPointers,
+                //            NextExecution = workflow.NextExecution,
+                //            Reference = workflow.Reference,
+                //            Status = workflow.Status,
+                //            Version = workflow.Version,
+                //            WorkflowDefinitionId = workflow.WorkflowDefinitionId,
+                //            ExecutionErrorCount = errors.Count()
+                //        }
+                //    })
+                //.Select(x => x.Workflow)
                 .ToListAsync();
             return result;
         }
@@ -192,28 +194,28 @@ namespace WorkflowCore.Persistence.MongoDB.Services
             query = query.Skip(skip).Take(take);
 
             var result = await query
-                .GroupJoin(ExecutionErrors,
-                    workflow => workflow.Id,
-                    error => error.WorkflowId,
-                    (workflow, errors) => new
-                    {
-                        Workflow = new WorkflowInstance()
-                        {
-                            Id = workflow.Id,
-                            CompleteTime = workflow.CompleteTime,
-                            CreateTime = workflow.CreateTime,
-                            Data = workflow.Data,
-                            Description = workflow.Description,
-                            ExecutionPointers = workflow.ExecutionPointers,
-                            NextExecution = workflow.NextExecution,
-                            Reference = workflow.Reference,
-                            Status = workflow.Status,
-                            Version = workflow.Version,
-                            WorkflowDefinitionId = workflow.WorkflowDefinitionId,
-                            ExecutionErrorCount = errors.Count()
-                        }
-                    })
-                .Select(x => x.Workflow)
+                //.GroupJoin(ExecutionErrors,
+                //    workflow => workflow.Id,
+                //    error => error.WorkflowId,
+                //    (workflow, errors) => new
+                //    {
+                //        Workflow = new WorkflowInstance()
+                //        {
+                //            Id = workflow.Id,
+                //            CompleteTime = workflow.CompleteTime,
+                //            CreateTime = workflow.CreateTime,
+                //            Data = workflow.Data,
+                //            Description = workflow.Description,
+                //            ExecutionPointers = workflow.ExecutionPointers,
+                //            NextExecution = workflow.NextExecution,
+                //            Reference = workflow.Reference,
+                //            Status = workflow.Status,
+                //            Version = workflow.Version,
+                //            WorkflowDefinitionId = workflow.WorkflowDefinitionId,
+                //            ExecutionErrorCount = errors.Count()
+                //        }
+                //    })
+                //.Select(x => x.Workflow)
                 .ToListAsync();
             return result;
         }
