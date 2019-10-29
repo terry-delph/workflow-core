@@ -59,19 +59,18 @@ namespace WorkflowCore.Services
             {
                 var query = _instances.AsQueryable();
 
-                var rawResult = query.Join(_errors,
+                var rawResult = query
+                    .Where(x => x.Id == Id)
+                    .GroupJoin(_errors,
                         workflow => workflow.Id,
                         error => error.WorkflowId,
-                        (workflow, error) => new { Workflow = workflow, Error = error })
-                    .GroupBy(x => x.Workflow,
-                        selector => new { selector.Workflow, ErrorCount = selector.Error })
-                    .Select(grouping => new { WorkFlow = grouping.Key, ExecutionErrorCount = grouping.Count() })
-                    .First(x => x.WorkFlow.Id == Id);
+                        (workflow, errors) => new { Workflow = workflow, ExecutionErrorCount = errors.Count() })
+                    .First();
 
                 //Set the Execution Error Count
-                rawResult.WorkFlow.ExecutionErrorCount = rawResult.ExecutionErrorCount;
+                rawResult.Workflow.ExecutionErrorCount = rawResult.ExecutionErrorCount;
 
-                return rawResult.WorkFlow;
+                return rawResult.Workflow;
             }
         }
 
@@ -87,19 +86,17 @@ namespace WorkflowCore.Services
                 var query = _instances.AsQueryable();
 
                 query = query.Where(x => ids.Contains(x.Id));
-                var rawResult = query.Join(_errors,
+                var rawResult = query
+                    .GroupJoin(_errors,
                         workflow => workflow.Id,
                         error => error.WorkflowId,
-                        (workflow, error) => new { Workflow = workflow, Error = error })
-                    .GroupBy(x => x.Workflow,
-                        selector => new { selector.Workflow, ErrorCount = selector.Error })
-                    .Select(grouping => new { WorkFlow = grouping.Key, ExecutionErrorCount = grouping.Count() })
+                        (workflow, errors) => new { Workflow = workflow, ExecutionErrorCount = errors.Count() })
                     .ToList();
 
                 //Set the Execution Error Counts
-                rawResult.ForEach(x => x.WorkFlow.ExecutionErrorCount = x.ExecutionErrorCount);
+                rawResult.ForEach(x => x.Workflow.ExecutionErrorCount = x.ExecutionErrorCount);
 
-                return rawResult.Select(x => x.WorkFlow).ToList();
+                return rawResult.Select(x => x.Workflow).ToList();
             }
         }
 
@@ -131,19 +128,17 @@ namespace WorkflowCore.Services
 
                 query = query.Skip(skip).Take(take);
 
-                var rawResult = query.Join(_errors,
+                var rawResult = query
+                    .GroupJoin(_errors,
                         workflow => workflow.Id,
                         error => error.WorkflowId,
-                        (workflow, error) => new {Workflow = workflow, Error = error})
-                    .GroupBy(x => x.Workflow,
-                        selector => new {selector.Workflow, ErrorCount = selector.Error})
-                    .Select(grouping => new {WorkFlow = grouping.Key, ExecutionErrorCount = grouping.Count()})
+                        (workflow, errors) => new { Workflow = workflow, ExecutionErrorCount = errors.Count() })
                     .ToList();
 
                 //Set the Execution Error Counts
-                rawResult.ForEach(x => x.WorkFlow.ExecutionErrorCount = x.ExecutionErrorCount);
+                rawResult.ForEach(x => x.Workflow.ExecutionErrorCount = x.ExecutionErrorCount);
 
-                return rawResult.Select(x => x.WorkFlow).ToList();
+                return rawResult.Select(x => x.Workflow).ToList();
             }
         }
 

@@ -102,7 +102,7 @@ namespace WorkflowCore.Services
             }
             ProcessAfterExecutionIteration(workflow, def, wfResult);
             DetermineNextExecutionTime(workflow);
-
+            UpdateExecutionErrorCount(workflow, wfResult);
             return wfResult;
         }
 
@@ -261,6 +261,18 @@ namespace WorkflowCore.Services
                 Version = workflow.Version
             });
         }
-        
+
+        /// <summary>
+        /// Updates the Workflow Execution Error Count.
+        /// </summary>
+        /// <param name="workflow"></param>
+        /// <param name="wfResult"></param>
+        private void UpdateExecutionErrorCount(WorkflowInstance workflow, WorkflowExecutorResult wfResult)
+        {
+            if (wfResult.Errors.Any())
+            {
+                workflow.ExecutionErrorCount += wfResult.Errors.Count;
+            }
+        }
     }
 }
