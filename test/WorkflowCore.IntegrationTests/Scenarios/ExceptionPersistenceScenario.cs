@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using WorkflowCore.Interface;
 using WorkflowCore.Models;
 using Xunit;
@@ -17,7 +19,6 @@ namespace WorkflowCore.IntegrationTests.Scenarios
         {
             builder
                 .StartWith<ExceptionThrownStep>()
-                    //.OnError(WorkflowErrorHandling.Terminate)
                     .CancelCondition(o => ExceptionThrownStep == 3)
                     .OnError(WorkflowErrorHandling.Retry, TimeSpan.FromSeconds(5))
                 .Then(context =>
@@ -58,23 +59,42 @@ namespace WorkflowCore.IntegrationTests.Scenarios
             ExceptionPersistenceWorkflow.ExceptionThrownStep = 0;
 
             var workflowId = StartWorkflow(null);
-            WaitForWorkflowToComplete(workflowId, TimeSpan.FromSeconds(30));
+            WaitForWorkflowToComplete(workflowId, TimeSpan.FromSeconds(60));
 
             GetStatus(workflowId).Should().Be(WorkflowStatus.Complete);
             UnhandledStepErrors.Count.Should().Be(3);
             ExceptionPersistenceWorkflow.ExceptionThrownStep.Should().Be(3);
 
-            //Get Persisted Errors
-            //PersistenceProvider.
-            var firstException = UnhandledStepErrors[0].Exception;
-            firstException.Should().NotBe(null);
-            firstException.Message.Should().Be(ExceptionThrownStep.ExceptionMessage);
-            firstException.HelpLink.Should().Be(ExceptionThrownStep.HelpLink);
-            firstException.TargetSite.Name.Should().NotBeEmpty();
-            firstException.TargetSite.Module.Name.Should().NotBeEmpty();
+            var persistedExecutionErrors = PersistenceProvider.GetExecutionErrors(workflowId).Result.ToList();
+            var workflowInstance = this.PersistenceProvider.GetWorkflowInstance(workflowId).Result;
+                
+            if (PersistenceProvider.SupportsPersistingErrors)
+            {
+                //Providers that support Persistence of Execution Errors
+                workflowInstance.ExecutionErrorCount.Should().Be(3);
 
-            var instances2 = PersistenceProvider.GetWorkflowInstances(null, string.Empty, null, null, 0, 100).Result;
+                persistedExecutionErrors.Count().Should().Be(3);
+                persistedExecutionErrors.ForEach(error =>
+                {
+                    error.Should().NotBe(null);
+                    error.Message.Should().Be(ExceptionThrownStep.ExceptionMessage);
+                    error.HelpLink.Should().Be(ExceptionThrownStep.HelpLink);
+                    error.TargetSiteName.Should().NotBeNullOrEmpty();
+                    error.TargetSiteModule.Should().NotBeNullOrEmpty();
+                    error.Type.Should().Be(typeof(NotImplementedException).FullName);
+                    error.Source.Should().NotBeNullOrEmpty();
+                    error.WorkflowId.Should().Be(workflowId);
+                    error.StackTrace.Should().NotBeNullOrEmpty();
+                    error.ErrorTime.Should().BeBefore(DateTime.UtcNow).And.BeAfter(DateTime.MinValue);
+                });
+            }
+            else
+            {
+                //Providers that DO NOT support Persistence of Execution Errors
+                workflowInstance.ExecutionErrorCount.Should().Be(0);
 
+                persistedExecutionErrors.Count.Should().Be(0);
+            }
         }
     }
 }
