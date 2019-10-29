@@ -4,6 +4,7 @@ using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using MongoDB.Driver.Linq;
 using WorkflowCore.Interface;
@@ -109,8 +110,32 @@ namespace WorkflowCore.Persistence.MongoDB.Services
 
         public async Task<WorkflowInstance> GetWorkflowInstance(string Id)
         {
-            var result = await WorkflowInstances.FindAsync(x => x.Id == Id);
-            return await result.FirstAsync();
+            var result = await WorkflowInstances
+                .AsQueryable()
+                .Where(x => x.Id == Id)
+                .GroupJoin(ExecutionErrors,
+                    workflow => workflow.Id,
+                    error => error.WorkflowId,
+                    (workflow, errors) => new
+                    {
+                        Workflow = new WorkflowInstance()
+                        {
+                            Id = workflow.Id,
+                            CompleteTime = workflow.CompleteTime,
+                            CreateTime = workflow.CreateTime,
+                            Data = workflow.Data,
+                            Description = workflow.Description,
+                            ExecutionPointers = workflow.ExecutionPointers,
+                            NextExecution = workflow.NextExecution,
+                            Reference = workflow.Reference,
+                            Status = workflow.Status,
+                            Version = workflow.Version,
+                            WorkflowDefinitionId = workflow.WorkflowDefinitionId,
+                            ExecutionErrorCount = errors.Count()
+                        }
+                    })
+                .FirstAsync();
+            return result.Workflow;
         }
 
         public async Task<IEnumerable<WorkflowInstance>> GetWorkflowInstances(IEnumerable<string> ids)
@@ -120,13 +145,37 @@ namespace WorkflowCore.Persistence.MongoDB.Services
                 return new List<WorkflowInstance>();
             }
 
-            var result = await WorkflowInstances.FindAsync(x => ids.Contains(x.Id));
-            return await result.ToListAsync();
+            var result = await WorkflowInstances.AsQueryable()
+                .Where(x => ids.Contains(x.Id))
+                .GroupJoin(ExecutionErrors,
+                    workflow => workflow.Id,
+                    error => error.WorkflowId,
+                    (workflow, errors) => new
+                    {
+                        Workflow = new WorkflowInstance()
+                        {
+                            Id = workflow.Id,
+                            CompleteTime = workflow.CompleteTime,
+                            CreateTime = workflow.CreateTime,
+                            Data = workflow.Data,
+                            Description = workflow.Description,
+                            ExecutionPointers = workflow.ExecutionPointers,
+                            NextExecution = workflow.NextExecution,
+                            Reference = workflow.Reference,
+                            Status = workflow.Status,
+                            Version = workflow.Version,
+                            WorkflowDefinitionId = workflow.WorkflowDefinitionId,
+                            ExecutionErrorCount = errors.Count()
+                        }
+                    })
+                .Select(x => x.Workflow)
+                .ToListAsync();
+            return result;
         }
 
         public async Task<IEnumerable<WorkflowInstance>> GetWorkflowInstances(WorkflowStatus? status, string type, DateTime? createdFrom, DateTime? createdTo, int skip, int take)
         {
-            IMongoQueryable<WorkflowInstance> query = WorkflowInstances.AsQueryable();
+            var query = WorkflowInstances.AsQueryable();
 
             if (status.HasValue)
                 query = query.Where(x => x.Status == status.Value);
@@ -142,17 +191,31 @@ namespace WorkflowCore.Persistence.MongoDB.Services
 
             query = query.Skip(skip).Take(take);
 
-            var rawResult = await query.Join(ExecutionErrors.AsQueryable(),
+            var result = await query
+                .GroupJoin(ExecutionErrors,
                     workflow => workflow.Id,
                     error => error.WorkflowId,
-                    (workflow, error) => new { Workflow = workflow, Error = error })
-                //.a
-                .GroupBy(x => x.Workflow,
-                    selector => new { selector.Workflow, ErrorCount = selector.Error })
-                .Select(grouping => new { WorkFlow = grouping.Key, ExecutionErrorCount = grouping.Count() })
+                    (workflow, errors) => new
+                    {
+                        Workflow = new WorkflowInstance()
+                        {
+                            Id = workflow.Id,
+                            CompleteTime = workflow.CompleteTime,
+                            CreateTime = workflow.CreateTime,
+                            Data = workflow.Data,
+                            Description = workflow.Description,
+                            ExecutionPointers = workflow.ExecutionPointers,
+                            NextExecution = workflow.NextExecution,
+                            Reference = workflow.Reference,
+                            Status = workflow.Status,
+                            Version = workflow.Version,
+                            WorkflowDefinitionId = workflow.WorkflowDefinitionId,
+                            ExecutionErrorCount = errors.Count()
+                        }
+                    })
+                .Select(x => x.Workflow)
                 .ToListAsync();
-
-            return await query.ToListAsync();
+            return result;
         }
 
         public async Task<string> CreateEventSubscription(EventSubscription subscription)
