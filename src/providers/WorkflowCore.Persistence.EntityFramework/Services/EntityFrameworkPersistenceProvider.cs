@@ -89,19 +89,20 @@ namespace WorkflowCore.Persistence.EntityFramework.Services
                 query = query.Skip(skip).Take(take);
 
                 var rawResult = await query
-                    .GroupJoin(db.Set<PersistedExecutionError>(),
-                        workflow => workflow.InstanceId.ToString(),
-                        error => error.WorkflowId,
-                        (workflow, errors) => new { Workflow = workflow, ExecutionErrorCount = errors.Count() })
+                    //.GroupJoin(db.Set<PersistedExecutionError>(),
+                    //    workflow => workflow.InstanceId.ToString(),
+                    //    error => error.WorkflowId,
+                    //    (workflow, errors) => new { Workflow = workflow, ExecutionErrorCount = errors.Count() })
                     .ToListAsync();
 
                 List<WorkflowInstance> result = new List<WorkflowInstance>();
 
                 foreach (var item in rawResult)
                 {
-                    var workflowInstance = item.Workflow.ToWorkflowInstance();
+                    var workflowInstance = item.ToWorkflowInstance();
+                    //var workflowInstance = item.Workflow.ToWorkflowInstance();
                     //Set the Execution Error Count
-                    workflowInstance.ExecutionErrorCount = item.ExecutionErrorCount;
+                    //workflowInstance.ExecutionErrorCount = item.ExecutionErrorCount;
                     result.Add(workflowInstance);
                 }
 
@@ -118,19 +119,20 @@ namespace WorkflowCore.Persistence.EntityFramework.Services
                     .Include(wf => wf.ExecutionPointers)
                     .ThenInclude(ep => ep.ExtensionAttributes)
                     .Where(x => x.InstanceId == uid)
-                    .GroupJoin(db.Set<PersistedExecutionError>(),
-                        workflow => workflow.InstanceId.ToString(),
-                        error => error.WorkflowId,
-                        (workflow, errors) => new { Workflow = workflow, ExecutionErrorCount = errors.Count() })
+                    //.GroupJoin(db.Set<PersistedExecutionError>(),
+                    //    workflow => workflow.InstanceId.ToString(),
+                    //    error => error.WorkflowId,
+                    //    (workflow, errors) => new { Workflow = workflow, ExecutionErrorCount = errors.Count() })
                     .FirstAsync();
 
                 if (rawResult == null)
                     return null;
                 
-                var workflowInstance = rawResult.Workflow.ToWorkflowInstance();
+                var workflowInstance = rawResult.ToWorkflowInstance();
+                //var workflowInstance = rawResult.Workflow.ToWorkflowInstance();
 
                 //Set the Execution Error Count
-                workflowInstance.ExecutionErrorCount = rawResult.ExecutionErrorCount;
+                //workflowInstance.ExecutionErrorCount = rawResult.ExecutionErrorCount;
                 return workflowInstance;
             }
         }
@@ -149,19 +151,20 @@ namespace WorkflowCore.Persistence.EntityFramework.Services
                     .Include(wf => wf.ExecutionPointers)
                     .ThenInclude(ep => ep.ExtensionAttributes)
                     .Where(x => uids.Contains(x.InstanceId))
-                    .GroupJoin(db.Set<PersistedExecutionError>(),
-                        workflow => workflow.InstanceId.ToString(),
-                        error => error.WorkflowId,
-                        (workflow, errors) => new { Workflow = workflow, ExecutionErrorCount = errors.Count() })
+                    //.GroupJoin(db.Set<PersistedExecutionError>(),
+                    //    workflow => workflow.InstanceId.ToString(),
+                    //    error => error.WorkflowId,
+                    //    (workflow, errors) => new { Workflow = workflow, ExecutionErrorCount = errors.Count() })
                     .ToListAsync();
 
                 List<WorkflowInstance> result = new List<WorkflowInstance>();
 
                 foreach (var item in rawResult)
                 {
-                    var workflowInstance = item.Workflow.ToWorkflowInstance();
+                    var workflowInstance = item.ToWorkflowInstance();
+                    //var workflowInstance = item.Workflow.ToWorkflowInstance();
                     //Set the Execution Error Count
-                    workflowInstance.ExecutionErrorCount = item.ExecutionErrorCount;
+                    //workflowInstance.ExecutionErrorCount = item.ExecutionErrorCount;
                     result.Add(workflowInstance);
                 }
 

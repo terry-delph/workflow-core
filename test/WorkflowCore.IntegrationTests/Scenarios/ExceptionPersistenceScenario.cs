@@ -67,12 +67,12 @@ namespace WorkflowCore.IntegrationTests.Scenarios
 
             var persistedExecutionErrors = PersistenceProvider.GetExecutionErrors(workflowId).Result.ToList();
             var workflowInstance = this.PersistenceProvider.GetWorkflowInstance(workflowId).Result;
-                
+            //ExecutionErrorCount is persisted on workflow instance, even if the execution error details are not.
+            workflowInstance.ExecutionErrorCount.Should().Be(3);
+    
             if (PersistenceProvider.SupportsPersistingErrors)
             {
                 //Providers that support Persistence of Execution Errors
-                workflowInstance.ExecutionErrorCount.Should().Be(3);
-
                 persistedExecutionErrors.Count().Should().Be(3);
                 persistedExecutionErrors.ForEach(error =>
                 {
@@ -91,8 +91,6 @@ namespace WorkflowCore.IntegrationTests.Scenarios
             else
             {
                 //Providers that DO NOT support Persistence of Execution Errors
-                workflowInstance.ExecutionErrorCount.Should().Be(0);
-
                 persistedExecutionErrors.Count.Should().Be(0);
             }
         }
