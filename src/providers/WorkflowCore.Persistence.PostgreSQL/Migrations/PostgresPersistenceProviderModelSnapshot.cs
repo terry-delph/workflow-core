@@ -207,6 +207,8 @@ namespace WorkflowCore.Persistence.PostgreSQL.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(500);
 
+                    b.Property<int>("ExecutionErrorCount");
+
                     b.Property<Guid>("InstanceId")
                         .HasMaxLength(200);
 
