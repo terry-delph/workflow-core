@@ -26,8 +26,9 @@ namespace WorkflowCore.Persistence.EntityFramework
             persistable.WorkflowDefinitionId = instance.WorkflowDefinitionId;
             persistable.Status = instance.Status;
             persistable.CreateTime = instance.CreateTime;
-            persistable.CompleteTime = instance.CompleteTime;            
-            
+            persistable.CompleteTime = instance.CompleteTime;
+            persistable.ExecutionErrorCount = instance.ExecutionErrorCount;
+
             foreach (var ep in instance.ExecutionPointers)
             {
                 var persistedEP = persistable.ExecutionPointers.FindById(ep.Id);
@@ -141,6 +142,8 @@ namespace WorkflowCore.Persistence.EntityFramework
             result.CreateTime = DateTime.SpecifyKind(instance.CreateTime, DateTimeKind.Utc);
             if (instance.CompleteTime.HasValue)
                 result.CompleteTime = DateTime.SpecifyKind(instance.CompleteTime.Value, DateTimeKind.Utc);
+
+            result.ExecutionErrorCount = instance.ExecutionErrorCount;
 
             result.ExecutionPointers = new ExecutionPointerCollection(instance.ExecutionPointers.Count + 8);
 
