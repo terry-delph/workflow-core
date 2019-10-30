@@ -4,7 +4,6 @@ using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 using MongoDB.Driver.Linq;
 using WorkflowCore.Interface;
@@ -111,33 +110,8 @@ namespace WorkflowCore.Persistence.MongoDB.Services
 
         public async Task<WorkflowInstance> GetWorkflowInstance(string Id)
         {
-            var result = await WorkflowInstances
-                .AsQueryable()
-                .Where(x => x.Id == Id)
-                //.GroupJoin(ExecutionErrors,
-                //    workflow => workflow.Id,
-                //    error => error.WorkflowId,
-                //    (workflow, errors) => new
-                //    {
-                //        Workflow = new WorkflowInstance()
-                //        {
-                //            Id = workflow.Id,
-                //            CompleteTime = workflow.CompleteTime,
-                //            CreateTime = workflow.CreateTime,
-                //            Data = workflow.Data,
-                //            Description = workflow.Description,
-                //            ExecutionPointers = workflow.ExecutionPointers,
-                //            NextExecution = workflow.NextExecution,
-                //            Reference = workflow.Reference,
-                //            Status = workflow.Status,
-                //            Version = workflow.Version,
-                //            WorkflowDefinitionId = workflow.WorkflowDefinitionId,
-                //            ExecutionErrorCount = errors.Count()
-                //        }
-                //    })
-                .FirstAsync();
-            //return result.Workflow;
-            return result;
+            var result = await WorkflowInstances.FindAsync(x => x.Id == Id);
+            return await result.FirstAsync();
         }
 
         public async Task<IEnumerable<WorkflowInstance>> GetWorkflowInstances(IEnumerable<string> ids)
@@ -147,37 +121,13 @@ namespace WorkflowCore.Persistence.MongoDB.Services
                 return new List<WorkflowInstance>();
             }
 
-            var result = await WorkflowInstances.AsQueryable()
-                .Where(x => ids.Contains(x.Id))
-                //.GroupJoin(ExecutionErrors,
-                //    workflow => workflow.Id,
-                //    error => error.WorkflowId,
-                //    (workflow, errors) => new
-                //    {
-                //        Workflow = new WorkflowInstance()
-                //        {
-                //            Id = workflow.Id,
-                //            CompleteTime = workflow.CompleteTime,
-                //            CreateTime = workflow.CreateTime,
-                //            Data = workflow.Data,
-                //            Description = workflow.Description,
-                //            ExecutionPointers = workflow.ExecutionPointers,
-                //            NextExecution = workflow.NextExecution,
-                //            Reference = workflow.Reference,
-                //            Status = workflow.Status,
-                //            Version = workflow.Version,
-                //            WorkflowDefinitionId = workflow.WorkflowDefinitionId,
-                //            ExecutionErrorCount = errors.Count()
-                //        }
-                //    })
-                //.Select(x => x.Workflow)
-                .ToListAsync();
-            return result;
+            var result = await WorkflowInstances.FindAsync(x => ids.Contains(x.Id));
+            return await result.ToListAsync();
         }
 
         public async Task<IEnumerable<WorkflowInstance>> GetWorkflowInstances(WorkflowStatus? status, string type, DateTime? createdFrom, DateTime? createdTo, int skip, int take)
         {
-            var query = WorkflowInstances.AsQueryable();
+            IMongoQueryable<WorkflowInstance> query = WorkflowInstances.AsQueryable();
 
             if (status.HasValue)
                 query = query.Where(x => x.Status == status.Value);
@@ -193,31 +143,7 @@ namespace WorkflowCore.Persistence.MongoDB.Services
 
             query = query.Skip(skip).Take(take);
 
-            var result = await query
-                //.GroupJoin(ExecutionErrors,
-                //    workflow => workflow.Id,
-                //    error => error.WorkflowId,
-                //    (workflow, errors) => new
-                //    {
-                //        Workflow = new WorkflowInstance()
-                //        {
-                //            Id = workflow.Id,
-                //            CompleteTime = workflow.CompleteTime,
-                //            CreateTime = workflow.CreateTime,
-                //            Data = workflow.Data,
-                //            Description = workflow.Description,
-                //            ExecutionPointers = workflow.ExecutionPointers,
-                //            NextExecution = workflow.NextExecution,
-                //            Reference = workflow.Reference,
-                //            Status = workflow.Status,
-                //            Version = workflow.Version,
-                //            WorkflowDefinitionId = workflow.WorkflowDefinitionId,
-                //            ExecutionErrorCount = errors.Count()
-                //        }
-                //    })
-                //.Select(x => x.Workflow)
-                .ToListAsync();
-            return result;
+            return await query.ToListAsync();
         }
 
         public async Task<string> CreateEventSubscription(EventSubscription subscription)
@@ -302,14 +228,11 @@ namespace WorkflowCore.Persistence.MongoDB.Services
 
         public async Task<IEnumerable<ExecutionError>> GetExecutionErrors(string workflowId)
         {
-            IMongoQueryable<ExecutionError> result = ExecutionErrors.AsQueryable();
-            {
-                var raw = await result
-                    .Where(x => x.WorkflowId == workflowId)
-                    .ToListAsync();
+            IMongoQueryable<ExecutionError> query = ExecutionErrors.AsQueryable();
 
-                return raw.Any() ? raw : new List<ExecutionError>();
-            }
+            query = query.Where(x => x.WorkflowId == workflowId);
+            var rawResult = await query.ToListAsync();
+            return rawResult.Any() ? rawResult : new List<ExecutionError>();
         }
     }
 }

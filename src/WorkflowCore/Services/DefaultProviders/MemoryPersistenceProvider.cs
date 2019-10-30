@@ -57,21 +57,7 @@ namespace WorkflowCore.Services
         {
             lock (_instances)
             {
-                var query = _instances.AsQueryable();
-
-                var rawResult = query
-                    .Where(x => x.Id == Id)
-                    //.GroupJoin(_errors,
-                    //    workflow => workflow.Id,
-                    //    error => error.WorkflowId,
-                    //    (workflow, errors) => new { Workflow = workflow, ExecutionErrorCount = errors.Count() })
-                    .First();
-
-                //Set the Execution Error Count
-                //rawResult.Workflow.ExecutionErrorCount = rawResult.ExecutionErrorCount;
-
-                //return rawResult.Workflow;
-                return rawResult;
+                return _instances.First(x => x.Id == Id);
             }
         }
 
@@ -84,21 +70,7 @@ namespace WorkflowCore.Services
 
             lock (_instances)
             {
-                var query = _instances.AsQueryable();
-
-                query = query.Where(x => ids.Contains(x.Id));
-                var rawResult = query
-                    //.GroupJoin(_errors,
-                    //    workflow => workflow.Id,
-                    //    error => error.WorkflowId,
-                    //    (workflow, errors) => new { Workflow = workflow, ExecutionErrorCount = errors.Count() })
-                    .ToList();
-
-                //Set the Execution Error Counts
-                //rawResult.ForEach(x => x.Workflow.ExecutionErrorCount = x.ExecutionErrorCount);
-
-                //return rawResult.Select(x => x.Workflow).ToList();
-                return rawResult;
+                return _instances.Where(x => ids.Contains(x.Id));
             }
         }
 
@@ -130,18 +102,7 @@ namespace WorkflowCore.Services
 
                 query = query.Skip(skip).Take(take);
 
-                var rawResult = query
-                    //.GroupJoin(_errors,
-                    //    workflow => workflow.Id,
-                    //    error => error.WorkflowId,
-                    //    (workflow, errors) => new { Workflow = workflow, ExecutionErrorCount = errors.Count() })
-                    .ToList();
-
-                //Set the Execution Error Counts
-                //rawResult.ForEach(x => x.Workflow.ExecutionErrorCount = x.ExecutionErrorCount);
-
-                //return rawResult.Select(x => x.Workflow).ToList();
-                return rawResult;
+                return query.ToList();
             }
         }
 
