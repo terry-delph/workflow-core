@@ -29,7 +29,7 @@ namespace WorkflowCore.Models
 
         /// <summary>
         /// A count of how many <see cref="ExecutionError"/>'s have been generated against this <see cref="WorkflowInstance"/>.
-        /// Errors can be retrieved separately due the high amount of errors that may be generated.
+        /// Errors can be retrieved separately due to the high amount of errors that may be generated.
         /// </summary>
         public int ExecutionErrorCount { get; set; }
 
