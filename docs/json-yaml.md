@@ -3,7 +3,7 @@
 Simply grab the `DefinitionLoader` from the IoC container and call the `.LoadDefinition` method
 
 ```c#
-using WorkflowCore.Interface;
+using using WorkflowCore.Services.DefinitionStorage;
 ...
 var loader = serviceProvider.GetService<IDefinitionLoader>();
 loader.LoadDefinition("<<json or yaml string here>>", Deserializers.Json);
